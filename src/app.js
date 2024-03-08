@@ -15,8 +15,17 @@ app.use(express.json({
 }))
 
 // While receiving data from  url encoded forms
-app.use(express.urlencoded({extended: true,limit:"16kb"}))
+app.use(express.urlencoded({ extended: true, limit: "16kb" }))
 app.use(express.static("public"))
 app.use(cookieParser())
 
-export {app}
+// routes import 
+import userRouter from './routes/user.routes.js'
+
+// routes declaration 
+app.use("/api/v1/users", userRouter) // we can't use app.get() since here we have to include  the  middleware function , since controller and routes have been separated
+// pass control to user.routes file
+// route will look like : http://localhost:8000/api/v1/users/register
+
+
+export { app }
