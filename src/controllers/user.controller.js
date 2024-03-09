@@ -16,7 +16,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // return response
 
     const { fullname, email, username, password } = req.body
-    console.log("email:", email)
+    // console.log("email:", email)
 
     // checking for validation of empty fields
     if (
@@ -25,7 +25,7 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, 'All fields are required!!')
     }
 
-    const existeduser = User.findOne({
+    const existeduser =  await User.findOne({
         $or: [{ username }, { email }]
     })
 
@@ -33,8 +33,8 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "Email or Username is taken!")
     }
 
-    const avatarLocalPath = req.files?.avatar[0]?.path
-    const coverImagepath = req.files?.coverimage[0]?.path
+    const avatarLocalPath = req.files?.avatar?.[0]?.path
+    const coverImagepath = req.files?.coverimage?.[0]?.path
 
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar field is required")
