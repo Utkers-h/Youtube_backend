@@ -4,6 +4,7 @@ import { User } from '../models/user.model.js'
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 
 
@@ -372,6 +373,58 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200,channel[0],"User channel fetched successfully!!"))
 })
 
+// writing the pipeline for user watch history
+const  getWatchHistory =  asyncHandler(async(req,res)=>{
+    const user = await User.aggregate([
+        {   
+            // since , req.user._id will return us the string of mongodb(object id ), which is behind the scenes is converted
+            // into the mongodb id by mongoose 
+            // But in case of aggregation pipelines they are not converted into mongodb id , since mongoose doesn't act upon pipelines
+            // so we have to create the object id of mongoose 
+            $match:{
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup:{
+                    from: "videos",
+                    localField: "watchHistory",
+                    foreignField:"_id",
+                    as: "watchHistory",
+                    // we have to inject a subpipeline to get the owner of the user(see model)
+                    pipeline:[
+                        {
+                            $lookup:{
+                                from : "users",
+                                localField: "owner",
+                                foreignField: "_id",
+                                as: "owner",
+                                pipeline: [
+                                    {
+                                        $project:{
+                                            fullName: 1,
+                                            username: 1,
+                                            avatar: 1
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            $addFields:{
+                                owner:{
+                                    $first: "$owner"
+                                }
+                            }
+                        }
+                    ]
+            }
+        }
+    ])
+
+    return res.status(200).json(new ApiResponse(200,user[0].watchHistory,"User's watch history retrieved successfully"));
+})
+
 export {
     registerUser,
     loginUser,
@@ -382,5 +435,6 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory
 }
