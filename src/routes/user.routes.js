@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { loginUser, logoutUser, refreshAccessToken, registerUser } from "../controllers/user.controller.js";
-import {upload}  from "../middlewares/multer.middleware.js"
+import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, loginUser, logoutUser, refreshAccessToken, registerUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from "../controllers/user.controller.js";
+import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
-const  router = Router();
+const router = Router();
 
 router.route("/register").post(
     // injecting middlewares to get images 
@@ -13,20 +13,30 @@ router.route("/register").post(
             maxCount: 1
         },
         {
-            name:'coverImage',
+            name: 'coverImage',
             maxCount: 1
         }
     ]),
     registerUser
-    )
+)
 
 router.route("/login").post(loginUser)
 
 // secured routes
 // to verify whether the user is loggedIn , we will inject the auth middleware
 // that's why we have written next() to run the next middleware functions
-router.route("/logout").post(verifyJWT,logoutUser)
+router.route("/logout").post(verifyJWT, logoutUser)
 router.route("/refresh_access_token").post(refreshAccessToken)
+router.route("/change-password").post(verifyJWT, changeCurrentPassword)
+router.route("/current-user").get(verifyJWT, getCurrentUser)
+router.route("/update-account").patch(verifyJWT, updateAccountDetails)
+
+router.route("/avatar").patch(verifyJWT, upload.single('avatar'), updateUserAvatar);
+router.route("/coverImage").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage)
+
+router.route("/c/:username").get(verifyJWT, getUserChannelProfile)
+
+router.route("/history").get(verifyJWT, getWatchHistory)
 
 
 export default router
